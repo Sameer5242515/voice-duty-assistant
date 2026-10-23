@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Voice Duty Assistant</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: white;
+      text-align: center;
+      padding: 24px;
+    }
+    h1 { color: #70d6ff; }
+    input, button {
+      font-size: 18px;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #1687ff;
+      color: white;
+      border: 0;
+    }
+    #answer {
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎙️ Voice Duty Assistant</h1>
+  <p>Save your duty time and ask by voice.</p>
+
+  <label for="duty">My duty schedule</label>
+  <input id="duty" placeholder="Example: Monday 08:00 to 16:00">
+  <button onclick="saveDuty()">Save Duty Time</button>
+  <button onclick="askVoice()">🎤 Ask by Voice</button>
+
+  <p id="answer">Your saved duty will appear here.</p>
+
+  <script>
+    function saveDuty() {
+      const duty = document.getElementById('duty').value.trim();
+      if (!duty) {
+        speak('Please enter your duty schedule first.');
+        return;
+      }
+      localStorage.setItem('myDuty', duty);
+      document.getElementById('answer').textContent =
+        'Saved duty: ' + duty;
+      speak('Your duty schedule has been saved.');
+    }
+
+    function speak(message) {
+      document.getElementById('answer').textContent = message;
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+        speechSynthesis.speak(new SpeechSynthesisUtterance(message));
+      }
+    }
+
+    function askVoice() {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        speak('Voice recognition is not supported in this browser. Please use a supported browser.');
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.onresult = function(event) {
+        const question = event.results[0][0].transcript.toLowerCase();
+        const duty = localStorage.getItem('myDuty');
+
+        if (question.includes('duty') || question.includes('work') ||
+            question.includes('schedule') || question.includes('time')) {
+          speak(duty ? 'Your saved duty schedule is ' + duty :
+            'You have not saved your duty schedule yet.');
+        } else {
+          speak('I heard: ' + question +
+            '. Please ask me about your duty schedule.');
+        }
+      };
+      recognition.onerror = function() {
+        speak('I could not hear you. Please try again.');
+      };
+      recognition.start();
+    }
+
+    const saved = localStorage.getItem('myDuty');
+    if (saved) {
+      document.getElementById('duty').value = saved;
+      document.getElementById('answer').textContent =
+        'Saved duty: ' + saved;
+    }
+  </script>
+</body>
+</html>
